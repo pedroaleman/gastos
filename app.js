@@ -1,8 +1,18 @@
 ﻿//https://web.dev/articles/codelab-make-installable?hl=es-419
 
+var url = window.location.href;
+var swLocation = '/gastos/sw.js';
+
+
 if (navigator.serviceWorker) {
     console.log('✅✅✅ Permite Service Worker***')
-    navigator.serviceWorker.register("/sw.js").then(res => {
+
+    if(url.includes('localhost')){
+        swLocation = '/sw.js';
+    }
+    
+
+    navigator.serviceWorker.register(swLocation).then(res => {
         console.log("✅✅✅Se registró correctamente el service worker✔✔💯")
     }).catch(err => {
         console.log("🔴🔴🔴No se registró el service worker❌❌❌")
