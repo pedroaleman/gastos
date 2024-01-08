@@ -40,7 +40,7 @@ window.addEventListener('beforeinstallprompt', (event) => {
     divInstall.classList.toggle('hidden', false);
   });
 
-  butInstall.addEventListener('click', async () => {
+/*   butInstall.addEventListener('click', async () => {
     console.log('👍', 'butInstall-clicked');
     const promptEvent = window.deferredPrompt;
     if (!promptEvent) {
@@ -57,7 +57,7 @@ window.addEventListener('beforeinstallprompt', (event) => {
     window.deferredPrompt = null;
     // Hide the install button.
     divInstall.classList.toggle('hidden', true);
-  });
+  }); */
 
   window.addEventListener('appinstalled', (event) => {
     console.log('👍', 'appinstalled', event);
