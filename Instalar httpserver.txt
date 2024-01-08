@@ -1,0 +1,8 @@
+1. Ir al sitio:  https://www.npmjs.com/package/http-server
+
+2. En msdos (Administrador)
+    > cd "C:\GITHUB\MisGastos"
+    > http-server
+
+    --Si estuviera ocupado elpuerto 8080, se puede abrir otro puerto
+        > http-server -p 8081

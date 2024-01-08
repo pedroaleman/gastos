@@ -1,0 +1,207 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="white">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="black">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Mis Gastos</title>
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="/lib/jquery/dist/jquery.min.js"></script>
+    <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/site.js" asp-append-version="true"></script>
+    <script src="/js/generic.js" asp-append-version="true"></script>
+
+    <link rel="manifest" href="/manifest.json">
+
+    <!--PWA -->
+    <!--<meta name="theme-color" content="#efde3e">
+    <meta name="MobileOptimized" content="width">
+    <meta name="HandheldFriendly" content="true">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="shortcut icon" type="image/png" href="/Imagenes/Logo.png">-->
+    <!-- Android -->
+    <meta name="theme-color" content="#000000">
+
+    <!-- IOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+</head>
+<body>   
+    <header class="p-3 bg-dark text-white">
+        <div class="container">
+            <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+                <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+                    <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap"><use xlink:href="#bootstrap"></use></svg>
+                </a>
+
+                <ul id="menuPrincipal" class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+                    <li><a href="/" class="nav-link px-2 text-white">Inicio</a></li>
+                    <li><a href="/Ingresos" class="nav-link px-2 text-white">Ingresos</a></li>
+                    <li><a href="/Gastos" class="nav-link px-2 text-white">Gastos</a></li>        
+                </ul>
+            </div>
+        </div>
+    </header>
+
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            <div class="container p-1">
+                <div class="card mb-4 rounded-3 shadow-sm">
+                    <div class="card-header py-3 bg-danger text-white">
+                        <h4 class="my-0 fw-normal">Gastos</h4>
+                    </div>
+                    <div class="card-body">
+                        <h1 id="lblTotal" class="card-title pricing-card-title">$0</h1>
+                        <input type="number" class="form-control mt-5" id="Importe" placeholder="Capture Importe" required="">
+                        <input type="text" class="form-control mt-1" id="Concepto" placeholder="Concepto" required="">
+                        <button type="button" onclick="Agregar()" class="w-100 btn btn-lg btn-primary mt-3">Agregar</button>
+                    </div>
+                </div>
+            
+                <hr class="my-4">
+            
+                <div class="card text-dark mb-3">
+                    <div class="card-header bg-warning"><h5 class="card-title">Movimientos</h5></div>
+                    <div id="Movimientos" class="card-body">
+                    </div>
+                </div>
+            
+            </div>
+        </main>
+    </div>
+
+
+    <script src="/app.js"></script>
+
+
+</body>
+</html>
+
+<script src="/js/basedatos.js"></script>
+<script type="text/javascript">
+    const clsBase = new clsBaseDatos();
+
+    $(document).ready(function () {
+        if (!window.indexedDB) {
+            console.log("¡IndexedDB no es compatible!");
+        }
+
+        clsBase.IniciarBaseDatos(result => {
+            Totales();
+        });
+    });  
+
+    function Totales() {
+        document.getElementById('lblTotal').innerHTML = `$0.00`;
+        document.getElementById('Movimientos').innerHTML = '';
+        let transaccion = base.transaction(['gastos']);
+        let gastos = transaccion.objectStore('gastos');
+        let puntero = gastos.openCursor();
+        let total = 0;
+        puntero.onsuccess = function (evento) {
+            let puntero = evento.target.result;
+            if (puntero) {
+                total += parseFloat(puntero.value.importe);
+                //console.log('hola: ', total);
+                document.getElementById('lblTotal').innerHTML = `${formatCurrency(total)}`;
+                document.getElementById('Movimientos').innerHTML +=
+                    `<div class="row p-1">
+                                <div class="col-3">
+                                             ${formatCurrency(parseFloat(puntero.value.importe))}
+                                </div>
+                                <div class="col-4">
+                                        ${puntero.value.concepto}
+                                </div>
+                                <div class="col-3">
+                                        ${new Date(puntero.value.fecha).toLocaleDateString()}
+                                </div>
+                                <div class="col-2">
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="Quitar(${puntero.key});">Quitar</button>
+                                </div>
+                            </div>
+                            `;
+
+
+
+                puntero.continue();
+            }
+        }
+
+    }
+
+
+    function Quitar(key) {
+        //console.log('Quitar...', key)
+
+        let transaccion = base.transaction(['gastos'], 'readwrite');
+        let gastos = transaccion.objectStore('gastos');
+        gastos.delete(key);
+        transaccion.oncomplete = function () {
+            Totales();
+        }
+    }
+
+
+    function Agregar() {
+        let transaccion = base.transaction(['gastos'], 'readwrite');
+        let gastos = transaccion.objectStore('gastos');
+        let importe = document.getElementById('Importe').value;
+        let concepto = document.getElementById('Concepto').value;
+
+        if (importe == '') {
+            Swal.fire({
+                title: "Capture Importe",
+                icon: "warning"
+            });
+            return;
+        }
+        if (concepto == '') {
+            Swal.fire({
+                title: "Capture un concepto",
+                icon: "warning"
+            });
+            return;
+        }
+
+        //console.log('Importe: ', importe);
+
+        let gasto = { importe: importe, concepto: concepto, fecha: Date.now() };
+        gastos.add(gasto);
+
+        transaccion.oncomplete = function () {
+            Swal.fire({
+                title: "Aviso",
+                text: "Guardado correctamente",
+                icon: "info"
+            });
+            document.getElementById('Importe').value = null;
+            document.getElementById('Concepto').value = null;
+            document.getElementById('Importe').focus();
+            Totales();
+        }
+
+        transaccion.onerror = function (evento) {
+            Swal.fire({
+                title: "Error al Abrir Base de Datos",
+                text: evento.target.errorCode,
+                icon: "warning"
+            });
+        }
+
+    }
+
+
+    // function Cerrar() {
+    //     localStorage.removeItem('session');
+    //     let url = location.origin + '/Home/Inicio';
+    //     window.location.href = url;
+    // }
+
+</script>
