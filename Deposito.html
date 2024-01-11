@@ -11,8 +11,8 @@
 
    
     <!--Desarrollo -->
-    
-<!--     <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+<!--     
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
     <script src="/lib/jquery/dist/jquery.min.js"></script>
     <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -24,14 +24,16 @@
  -->
 
       <!--Prodfuccion -->
-      <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
+      
+    <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
       <link rel="stylesheet" href="/gastos/css/site.css" asp-append-version="true" />
       <script src="/gastos/lib/jquery/dist/jquery.min.js"></script>
       <script src="/gastos/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
       <script src="/gastos/js/site.js" asp-append-version="true"></script>
       <script src="/gastos/js/generic.js" asp-append-version="true"></script>
       <link rel="manifest" href="/gastos/manifest.json">
-      <link rel="shortcut icon" href="/gastos/favicon.ico">
+      <link rel="shortcut icon" href="/gastos/favicon.ico"> 
+
 
 
 
@@ -74,7 +76,7 @@
 
                 <div class="card mb-4 rounded-3 shadow-sm">
                     <div class="card-header py-3">
-                        <h4 class="my-0 fw-normal">Ingresos</h4>
+                        <h4 class="my-0 fw-normal">Depósito</h4>
                     </div>
                     <div class="card-body">
                         <h1 id="lblTotal" class="card-title pricing-card-title">$0</h1>
@@ -120,38 +122,34 @@
     function Totales() {
         document.getElementById('lblTotal').innerHTML = `$0.00`;
         document.getElementById('Movimientos').innerHTML = '';
-        let transaccion = base.transaction(['ingresos']);
-        let ingresos = transaccion.objectStore('ingresos');
-        let puntero = ingresos.openCursor();
+        let transaccion = base.transaction(['debito']);
+        let obj = transaccion.objectStore('debito');
+        let puntero = obj.openCursor();
         //puntero.addEventListener("success", obtieneTotal);
 
         let total = 0;
         puntero.onsuccess = function (evento) {
             let puntero = evento.target.result;
             if (puntero) {
-                total += parseFloat(puntero.value.importe);
-                //console.log('hola: ', total);
-                let boton =``;
-                if(puntero.value.keyretiro == null){
-                    boton = `<div class="col-2">
-                                    <button type="button" class="btn btn-sm btn-danger" onclick="Quitar(${puntero.key});">Quitar</button>
-                            </div>`;
-                }
-
-                document.getElementById('lblTotal').innerHTML = `${formatCurrency(total)}`;
-                document.getElementById('Movimientos').innerHTML +=
-                        `<div class="row p-1">
+                if(puntero.value.tipo == 'deposito'){
+                    total += parseFloat(puntero.value.importe);
+                    //console.log('hola: ', total);
+                    document.getElementById('lblTotal').innerHTML = `${formatCurrency(total)}`;
+                    document.getElementById('Movimientos').innerHTML +=
+                    `<div class="row p-1">
                             <div class="col-3"><small>${formatCurrency(parseFloat(puntero.value.importe))}</small>
-                                </div>
-                                <div class="col-4"><small>${puntero.value.concepto}</small>
-                                </div>
-                                <div class="col-3"><small>${new Date(puntero.value.fecha).toLocaleDateString()}</small>
-                                </div>
-                                ${boton}
+                            </div>
+                            <div class="col-4"><small>${puntero.value.concepto}</small>
+                            </div>
+                            <div class="col-3"><small>${new Date(puntero.value.fecha).toLocaleDateString()}</small>
+                            </div>
+                            <div class="col-2">
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="Quitar(${puntero.key});">Quitar</button>
+                            </div>
                         </div>
                         `;
 
-
+                }                   
 
                 puntero.continue();
             }
@@ -162,9 +160,9 @@
     function Quitar(key) {
         //console.log('Quitar...', key)
 
-        let transaccion = base.transaction(['ingresos'], 'readwrite');
-        let ingresos = transaccion.objectStore('ingresos');
-        ingresos.delete(key);
+        let transaccion = base.transaction(['debito'], 'readwrite');
+        let obj = transaccion.objectStore('debito');
+        obj.delete(key);
         transaccion.oncomplete = function () {
             Totales();
         }
@@ -172,8 +170,8 @@
 
 
     function Agregar() {
-        let transaccion = base.transaction(['ingresos'], 'readwrite');
-        let ingresos = transaccion.objectStore('ingresos');
+        let transaccion = base.transaction(['debito'], 'readwrite');
+        let obj = transaccion.objectStore('debito');
         let importe = document.getElementById('Importe').value;
         let concepto = document.getElementById('Concepto').value;
 
@@ -194,8 +192,8 @@
 
         //console.log('Importe: ', importe);
 
-        let ingreso = { importe: importe, concepto: concepto, fecha: Date.now(), keyretiro: null };
-        ingresos.add(ingreso);
+        let item = {tipo:'deposito', importe: importe, concepto: concepto, fecha: Date.now() };
+        obj.add(item);
 
         transaccion.oncomplete = function () {
             Swal.fire({

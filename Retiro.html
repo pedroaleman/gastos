@@ -24,14 +24,17 @@
  -->
 
       <!--Prodfuccion -->
-      <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
+      
+    <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
       <link rel="stylesheet" href="/gastos/css/site.css" asp-append-version="true" />
       <script src="/gastos/lib/jquery/dist/jquery.min.js"></script>
       <script src="/gastos/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
       <script src="/gastos/js/site.js" asp-append-version="true"></script>
       <script src="/gastos/js/generic.js" asp-append-version="true"></script>
       <link rel="manifest" href="/gastos/manifest.json">
-      <link rel="shortcut icon" href="/gastos/favicon.ico">
+      <link rel="shortcut icon" href="/gastos/favicon.ico"> 
+    
+
 
 
 
@@ -74,12 +77,11 @@
 
                 <div class="card mb-4 rounded-3 shadow-sm">
                     <div class="card-header py-3">
-                        <h4 class="my-0 fw-normal">Ingresos</h4>
+                        <h4 class="my-0 fw-normal">Retiro</h4>
                     </div>
                     <div class="card-body">
                         <h1 id="lblTotal" class="card-title pricing-card-title">$0</h1>
                         <input type="number" class="form-control form-control-lg mt-5" id="Importe" placeholder="Capture Importe" required="">
-                        <input type="text" class="form-control form-control-lg mt-1" id="Concepto" placeholder="Concepto" required="">
                         <button type="button" onclick="Agregar()" class="w-100 btn btn-lg btn-primary mt-3">Agregar</button>
                     </div>
                 </div>
@@ -120,37 +122,33 @@
     function Totales() {
         document.getElementById('lblTotal').innerHTML = `$0.00`;
         document.getElementById('Movimientos').innerHTML = '';
-        let transaccion = base.transaction(['ingresos']);
-        let ingresos = transaccion.objectStore('ingresos');
-        let puntero = ingresos.openCursor();
+        let transaccion = base.transaction(['debito']);
+        let obj = transaccion.objectStore('debito');
+        let puntero = obj.openCursor();
         //puntero.addEventListener("success", obtieneTotal);
 
         let total = 0;
         puntero.onsuccess = function (evento) {
             let puntero = evento.target.result;
             if (puntero) {
-                total += parseFloat(puntero.value.importe);
-                //console.log('hola: ', total);
-                let boton =``;
-                if(puntero.value.keyretiro == null){
-                    boton = `<div class="col-2">
-                                    <button type="button" class="btn btn-sm btn-danger" onclick="Quitar(${puntero.key});">Quitar</button>
-                            </div>`;
-                }
-
-                document.getElementById('lblTotal').innerHTML = `${formatCurrency(total)}`;
-                document.getElementById('Movimientos').innerHTML +=
+                if(puntero.value.tipo == 'retiro'){
+                    total += parseFloat(puntero.value.importe);
+                    //console.log('hola: ', total);
+                    document.getElementById('lblTotal').innerHTML = `${formatCurrency(total)}`;
+                    document.getElementById('Movimientos').innerHTML +=
                         `<div class="row p-1">
-                            <div class="col-3"><small>${formatCurrency(parseFloat(puntero.value.importe))}</small>
+                                <div class="col-3"><small>${formatCurrency(parseFloat(puntero.value.importe))}</small>
                                 </div>
                                 <div class="col-4"><small>${puntero.value.concepto}</small>
                                 </div>
                                 <div class="col-3"><small>${new Date(puntero.value.fecha).toLocaleDateString()}</small>
                                 </div>
-                                ${boton}
-                        </div>
-                        `;
-
+                                <div class="col-2">
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="Quitar(${puntero.key});">Quitar</button>
+                                </div>
+                            </div>
+                            `;
+                }
 
 
                 puntero.continue();
@@ -162,20 +160,38 @@
     function Quitar(key) {
         //console.log('Quitar...', key)
 
-        let transaccion = base.transaction(['ingresos'], 'readwrite');
-        let ingresos = transaccion.objectStore('ingresos');
-        ingresos.delete(key);
-        transaccion.oncomplete = function () {
-            Totales();
-        }
+        //Primero quitarlo de ingresos
+        let trIngresos = base.transaction(['ingresos'], 'readwrite');
+        let objIngresos = trIngresos.objectStore('ingresos');
+        let puntero = objIngresos.openCursor();
+
+        puntero.onsuccess = function (evento) {
+            let puntero = evento.target.result;
+            if (puntero) {
+                if(puntero.value.keyretiro == key){
+                    let keyIngreso = puntero.key;
+                    objIngresos.delete(keyIngreso);
+                   
+                    trIngresos.oncomplete = function () {
+                        let transaccion = base.transaction(['debito'], 'readwrite');
+                        let obj = transaccion.objectStore('debito');
+                        obj.delete(key);
+                        transaccion.oncomplete = function () {
+                            Totales();
+                        }
+                    }
+
+
+                }
+            }
+        }        
     }
 
 
     function Agregar() {
-        let transaccion = base.transaction(['ingresos'], 'readwrite');
-        let ingresos = transaccion.objectStore('ingresos');
+        let transaccion = base.transaction(['debito'], 'readwrite');
+        let obj = transaccion.objectStore('debito');
         let importe = document.getElementById('Importe').value;
-        let concepto = document.getElementById('Concepto').value;
 
         if (importe == '') {
             Swal.fire({
@@ -184,27 +200,30 @@
             });
             return;
         }
-        if (concepto == '') {
-            Swal.fire({
-                title: "Capture un concepto",
-                icon: "warning"
-            });
-            return;
-        }
-
+      
         //console.log('Importe: ', importe);
 
-        let ingreso = { importe: importe, concepto: concepto, fecha: Date.now(), keyretiro: null };
-        ingresos.add(ingreso);
+        let item = {tipo:'retiro', importe: importe, concepto: 'Retiro en cajero', fecha: Date.now() };
+        const objectStoreRequest = obj.add(item);
 
-        transaccion.oncomplete = function () {
+        transaccion.oncomplete = function (event) {
             Swal.fire({
                 title: "Aviso",
                 text: "Guardado correctamente",
                 icon: "info"
             });
+
+            //console.log('Agregar Retiro: ',objectStoreRequest)
+            
+            //Agregar a ingresos con la key del Retiro
+            let keyRetiro = objectStoreRequest.result;
+            let trIngresos = base.transaction(['ingresos'], 'readwrite');
+            let objIngresos = trIngresos.objectStore('ingresos');
+            let item = { importe: importe, concepto: 'Retiro en cajero', fecha: Date.now(), keyretiro: keyRetiro };
+            objIngresos.add(item);
+
+
             document.getElementById('Importe').value = null;
-            document.getElementById('Concepto').value = null;
             document.getElementById('Importe').focus();
             Totales();
         }

@@ -59,6 +59,7 @@
                     <li><a href="/gastos/" class="nav-link px-2 text-white">Inicio</a></li>
                     <li><a href="/gastos/Ingresos" class="nav-link px-2 text-white">Ingresos</a></li>
                     <li><a href="/gastos/Gastos" class="nav-link px-2 text-white">Gastos</a></li>
+                    <li><a href="/gastos/Tarjeta" class="nav-link px-2 text-white">Tarjeta</a></li>
                 </ul>
             </div>
         </div>
@@ -128,15 +129,12 @@
                 document.getElementById('lblTotal').innerHTML = `${formatCurrency(total)}`;
                 document.getElementById('Movimientos').innerHTML +=
                     `<div class="row p-1">
-                                <div class="col-3">
-                                             ${formatCurrency(parseFloat(puntero.value.importe))}
-                                </div>
-                                <div class="col-4">
-                                        ${puntero.value.concepto}
-                                </div>
-                                <div class="col-3">
-                                        ${new Date(puntero.value.fecha).toLocaleDateString()}
-                                </div>
+                        <div class="col-3"><small>${formatCurrency(parseFloat(puntero.value.importe))}</small>
+                            </div>
+                            <div class="col-4"><small>${puntero.value.concepto}</small>
+                            </div>
+                            <div class="col-3"><small>${new Date(puntero.value.fecha).toLocaleDateString()}</small>
+                            </div>
                                 <div class="col-2">
                                         <button type="button" class="btn btn-sm btn-danger" onclick="Quitar(${puntero.key});">Quitar</button>
                                 </div>
