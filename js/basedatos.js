@@ -8,7 +8,7 @@ class clsBaseDatos {
 
     IniciarBaseDatos(callback) {
         console.log('Iniciando Base de Datos...')
-        let solicitudConexion = indexedDB.open('controldb',2);
+        let solicitudConexion = indexedDB.open('controldb',1);
 
         solicitudConexion.addEventListener("error", this.MostrarError);
         //solicitudConexion.addEventListener("success", this.Comenzar);

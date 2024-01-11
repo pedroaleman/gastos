@@ -12,7 +12,7 @@
     
 
     <!--Desarrollo -->
-<!--     
+<!--   
     <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
     <script src="/lib/jquery/dist/jquery.min.js"></script>
@@ -22,10 +22,11 @@
     <link rel="manifest" href="/manifest.json"> 
 
     <link rel="shortcut icon" href="/favicon.ico">
--->
 
+ -->
     <!--Prodfuccion -->
-    <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
+ 
+     <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/gastos/css/site.css" asp-append-version="true" />
     <script src="/gastos/lib/jquery/dist/jquery.min.js"></script>
     <script src="/gastos/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -91,6 +92,9 @@
                 </div>              
             </div>
         </main>
+
+        <button type="button" class="btn btn-link" onclick="Limpiar();">Limpiar Todo</button>
+
     </div>
 
     <script src="/gastos/app.js"></script>
@@ -113,6 +117,33 @@
         });
     });
 
+    async function Limpiar(){       
+        base.close();
+
+        var req = indexedDB.deleteDatabase('controldb');
+                req.onsuccess = function () {
+                    console.log("Deleted database successfully");
+                    Swal.fire({
+                    title: "Se eliminó información correctamente",                
+                    icon: "info"
+                });
+                };
+                req.onerror = function () {
+                    console.log("Couldn't delete database");
+                        Swal.fire({
+                        title: "No se pudo eliminar base de datos",                
+                        icon: "error"
+                    });
+                };
+                req.onblocked = function () {
+                    console.log("Couldn't delete database due to the operation being blocked");
+                    console.log("Couldn't delete database");
+                        Swal.fire({
+                        title: "No se pudo eliminar la base de datos debido a que la operación estaba bloqueada",                
+                        icon: "error"
+                        });
+                };
+    }
 
     function Totales() {
         document.getElementById('Ingreso').innerHTML = `$0.00`;
