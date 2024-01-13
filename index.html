@@ -12,8 +12,8 @@
     
 
     <!--Desarrollo -->
-<!--   
-    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+  
+<!--     <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
     <script src="/lib/jquery/dist/jquery.min.js"></script>
     <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -24,8 +24,8 @@
     <link rel="shortcut icon" href="/favicon.ico">
 
  -->
-    <!--Prodfuccion -->
- 
+    <!--Produccion -->
+
      <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/gastos/css/site.css" asp-append-version="true" />
     <script src="/gastos/lib/jquery/dist/jquery.min.js"></script>
@@ -34,7 +34,7 @@
     <script src="/gastos/js/generic.js" asp-append-version="true"></script>
     <link rel="manifest" href="/gastos/manifest.json">
     <link rel="shortcut icon" href="/gastos/favicon.ico">
-
+ 
 
     <!--PWA -->
     <!--<meta name="theme-color" content="#efde3e">
@@ -87,6 +87,11 @@
                         <div class="p-3 mb-2 bg-transparent text-dark">Disponible</div>
                         <div class="p-3 mb-2 text-center bg-dark text-white">
                             <h1 id="Saldo">$0.00</h1>
+                        </div>
+
+                        <div class="p-3 mb-2 bg-transparent text-dark">Efectivo + Tarjeta</div>
+                        <div class="p-3 mb-2 text-center bg-primary text-white">
+                            <h1 id="Total">$0.00</h1>
                         </div>
                     </div>
                 </div>              
@@ -149,6 +154,7 @@
         document.getElementById('Ingreso').innerHTML = `$0.00`;
         document.getElementById('Gasto').innerHTML = `$0.00`;
         document.getElementById('Saldo').innerHTML = `$0.00`;
+        document.getElementById('Total').innerHTML = `$0.00`;
 
         //Ingresos
         let transaccion = base.transaction(['ingresos']);
@@ -156,11 +162,12 @@
         let puntero = ingresos.openCursor();
         let totalIngresos = 0;
         let totalGastos = 0;
+        let totalTarjeta = 0;
         puntero.onsuccess = function (evento) {
             let puntero = evento.target.result;
             if (puntero) {
                 totalIngresos += parseFloat(puntero.value.importe);
-                Saldo(totalIngresos, totalGastos);
+                Saldo(totalIngresos, totalGastos,totalTarjeta);
                 puntero.continue();
             }
         }
@@ -174,21 +181,53 @@
             let puntero2 = evento.target.result;
             if (puntero2) {
                 totalGastos += parseFloat(puntero2.value.importe);
-                Saldo(totalIngresos, totalGastos);
+                Saldo(totalIngresos, totalGastos,totalTarjeta);
                 puntero2.continue();
             }
         }  
+
+        //Tarjeta
+        let transaccion3 = base.transaction(['debito']);
+        let objDebito = transaccion3.objectStore('debito');
+        let puntero3 = objDebito.openCursor();
+        let totalDeposito = 0;
+        let totalRetiro = 0;
+        let totalTransferencia = 0;
         
-        Saldo(totalIngresos, totalGastos);
+        puntero3.onsuccess = function (evento) {
+            let puntero3 = evento.target.result;
+            if (puntero3) {
+                if(puntero3.value.tipo == 'deposito')
+                    totalDeposito += parseFloat(puntero3.value.importe);
+                if(puntero3.value.tipo == 'retiro')
+                    totalRetiro += parseFloat(puntero3.value.importe);
+                if(puntero3.value.tipo == 'transferencia')
+                    totalTransferencia += parseFloat(puntero3.value.importe);
+
+                //console.log('totales: ',totalDeposito , totalRetiro , totalTransferencia)
+                totalTarjeta = totalDeposito - totalRetiro - totalTransferencia;
+                Saldo(totalIngresos, totalGastos,totalTarjeta);
+                puntero3.continue();
+            }
+        }
+
+        
+        Saldo(totalIngresos, totalGastos,totalTarjeta);
+        
+
+
     }
 
-    function Saldo(totalIngresos, totalGastos) {
+    function Saldo(totalIngresos, totalGastos, totalTarjeta) {
         let saldo =  totalIngresos - totalGastos;
-        //console.log('saldo: ', totalIngresos, totalGastos, saldo)
+        //console.log('saldo: ', totalIngresos, totalGastos, saldo,totalTarjeta)
 
         document.getElementById('Ingreso').innerHTML = `${formatCurrency(totalIngresos)}`;
         document.getElementById('Gasto').innerHTML = `${formatCurrency(totalGastos)}`;
         document.getElementById('Saldo').innerHTML = `${formatCurrency(saldo)}`;
+        document.getElementById('Total').innerHTML = `${formatCurrency(saldo + totalTarjeta)}`;
+       
     }
 
+   
 </script>
