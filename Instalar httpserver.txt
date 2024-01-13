@@ -6,3 +6,8 @@
 
     --Si estuviera ocupado elpuerto 8080, se puede abrir otro puerto
         > http-server -p 8081
+
+
+    Abrri en el navegador:
+        http://localhost:8080
+        
