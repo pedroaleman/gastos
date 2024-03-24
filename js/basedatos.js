@@ -6,6 +6,39 @@ class clsBaseDatos {
         //this.bd = null;
     }
 
+    ObtieneDatos(nombreBase) {
+        return new Promise((resolve, reject) => {
+            let transaccion = base.transaction([nombreBase]);
+            let ingresos = transaccion.objectStore(nombreBase);
+            let puntero = ingresos.openCursor();
+            let datosArray = []; // Array to store the cursor values
+
+            puntero.onsuccess = function (evento) {
+                let puntero = evento.target.result;
+                if (puntero) {
+                    // Add the cursor value to the array
+                    let object = {
+                        key: puntero.key,
+                        value: puntero.value
+                    };
+                    datosArray.push(object);
+                    
+                   
+
+                    puntero.continue();
+                } else {                  
+                    resolve(datosArray);
+                }
+            }
+
+            puntero.onerror = function (event) {
+                console.log("Error al leer datos", event);
+                reject(event);
+            }
+        });
+    }
+
+
     IniciarBaseDatos(callback) {
         console.log('Iniciando Base de Datos...')
         let solicitudConexion = indexedDB.open('controldb',1);

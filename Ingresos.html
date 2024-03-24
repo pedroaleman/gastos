@@ -19,19 +19,19 @@
     <script src="/js/site.js" asp-append-version="true"></script>
     <script src="/js/generic.js" asp-append-version="true"></script>
     <link rel="manifest" href="/manifest.json">
+    <link rel="shortcut icon" href="/favicon.ico"> -->
+ 
 
-    <link rel="shortcut icon" href="/favicon.ico">
- -->
+<!--Prodfuccion -->
 
-      <!--Prodfuccion -->
-      <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
-      <link rel="stylesheet" href="/gastos/css/site.css" asp-append-version="true" />
-      <script src="/gastos/lib/jquery/dist/jquery.min.js"></script>
-      <script src="/gastos/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-      <script src="/gastos/js/site.js" asp-append-version="true"></script>
-      <script src="/gastos/js/generic.js" asp-append-version="true"></script>
-      <link rel="manifest" href="/gastos/manifest.json">
-      <link rel="shortcut icon" href="/gastos/favicon.ico">
+<link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="/gastos/css/site.css" asp-append-version="true" />
+<script src="/gastos/lib/jquery/dist/jquery.min.js"></script>
+<script src="/gastos/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/gastos/js/site.js" asp-append-version="true"></script>
+<script src="/gastos/js/generic.js" asp-append-version="true"></script>
+<link rel="manifest" href="/gastos/manifest.json">
+<link rel="shortcut icon" href="/gastos/favicon.ico">
 
 
 
@@ -112,62 +112,88 @@
             console.log("¡IndexedDB no es compatible!");
         }
 
+        
+
         clsBase.IniciarBaseDatos(result => {
-            Totales();
+            Totales();            
         });
     });
 
+    
     function Totales() {
         document.getElementById('lblTotal').innerHTML = `$0.00`;
         document.getElementById('Movimientos').innerHTML = '';
-        let transaccion = base.transaction(['ingresos']);
-        let ingresos = transaccion.objectStore('ingresos');
-        let puntero = ingresos.openCursor();
-        //puntero.addEventListener("success", obtieneTotal);
 
-        let total = 0;
-        puntero.onsuccess = function (evento) {
-            let puntero = evento.target.result;
-            if (puntero) {
-                total += parseFloat(puntero.value.importe);
-                //console.log('hola: ', total);
-                let boton =``;
-                if(puntero.value.keyretiro == null){
-                    boton = `<div class="col-2">
-                                    <button type="button" class="btn btn-sm btn-danger" onclick="Quitar(${puntero.key});">Quitar</button>
-                            </div>`;
-                }
+        clsBase.ObtieneDatos('ingresos').then(datos => {
+                //console.log('leer: ', JSON.stringify(datos));  // Aquí puedes usar los datos como necesites
+                datos = datos.sort((a, b) => b.value.fecha - a.value.fecha);
 
+                let total = datos.reduce((suma, item) => suma + Number(item.value.importe), 0);
                 document.getElementById('lblTotal').innerHTML = `${formatCurrency(total)}`;
-                document.getElementById('Movimientos').innerHTML +=
-                        `<div class="row p-1">
-                            <div class="col-3"><small>${formatCurrency(parseFloat(puntero.value.importe))}</small>
-                                </div>
-                                <div class="col-4"><small>${puntero.value.concepto}</small>
-                                </div>
-                                <div class="col-3"><small>${new Date(puntero.value.fecha).toLocaleDateString()}</small>
-                                </div>
-                                ${boton}
-                        </div>
-                        `;
 
-
-
-                puntero.continue();
-            }
-        }
-
+                // Access each element in the datos array
+                datos.forEach(dato => {
+                    // Use the dato as needed
+                    //console.log('dato: ',dato);
+                    let boton =``;
+                    if(dato.value.keyretiro == null){
+                        boton = `<div class="col-2">
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="Quitar(${dato.key});">Quitar</button>
+                                </div>`;
+                    }
+                    
+                    document.getElementById('Movimientos').innerHTML +=
+                    `<div class="row p-1">
+                        <div class="col-3"><small>${formatCurrency(parseFloat(dato.value.importe))}</small>
+                            </div>
+                            <div class="col-4"><small>${dato.value.concepto}</small>
+                            </div>
+                            <div class="col-3"><small>${new Date(dato.value.fecha).toLocaleDateString()}</small>
+                            </div>
+                            ${boton}
+                    </div>
+                    `;
+                });
+            }).catch(error => {
+                console.log('Error al obtener datos: ', error);
+            });       
     }
 
     function Quitar(key) {
-        //console.log('Quitar...', key)
-
         let transaccion = base.transaction(['ingresos'], 'readwrite');
         let ingresos = transaccion.objectStore('ingresos');
-        ingresos.delete(key);
-        transaccion.oncomplete = function () {
-            Totales();
+
+        try {
+            let request = ingresos.get(key);
+            request.onsuccess = function(event) {
+                let data = event.target.result;
+                let pregunta = `¿Desea quitar el importe de ${formatCurrency(parseFloat(data.importe))} con concepto ${data.concepto}?`;
+                Swal.fire({
+                    title: 'Aviso',
+                    text: pregunta,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Si',
+                    cancelButtonText: 'No'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let transaccion = base.transaction(['ingresos'], 'readwrite');
+                        let ingresos = transaccion.objectStore('ingresos');
+                        let deleteRequest = ingresos.delete(key);
+                        deleteRequest.onsuccess = function() {
+                            transaccion.oncomplete = function () {
+                                Totales();
+                            }
+                        };
+                    }
+                });
+            };
+        } catch (error) {
+            console.log('error: ',error);
         }
+
+        
+        
     }
 
 
