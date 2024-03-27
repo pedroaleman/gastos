@@ -124,6 +124,7 @@
         clsBase.ObtieneDatos('debito').then(datos => {
                 //console.log('leer: ', JSON.stringify(datos));  // Aquí puedes usar los datos como necesites
                 datos = datos.sort((a, b) => b.value.fecha - a.value.fecha);
+                datos = datos.filter(dato => dato.value.tipo === 'retiro');
 
                 let total = datos.reduce((suma, item) => suma + Number(item.value.importe), 0);
                 document.getElementById('lblTotal').innerHTML = `${formatCurrency(total)}`;
