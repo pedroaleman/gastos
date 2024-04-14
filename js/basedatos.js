@@ -41,7 +41,7 @@ class clsBaseDatos {
 
     IniciarBaseDatos(callback) {
         console.log('Iniciando Base de Datos...')
-        let solicitudConexion = indexedDB.open('controldb',3);
+        let solicitudConexion = indexedDB.open('controldb',4);
 
         solicitudConexion.addEventListener("error", this.MostrarError);
         //solicitudConexion.addEventListener("success", this.Comenzar);
@@ -72,10 +72,18 @@ class clsBaseDatos {
         console.log('Creando almacenes de datos...')
         let baseDatos = evento.target.result;
         //let ingresos = baseDatos.createObjectStore('ingresos', { keyPath: "id" });
-        let ingresos = baseDatos.createObjectStore('ingresos', { autoIncrement: true });
-        let gastos = baseDatos.createObjectStore('gastos', { autoIncrement: true });
-        let debito = baseDatos.createObjectStore('debito', { autoIncrement: true });
-        let credito = baseDatos.createObjectStore('credito', { autoIncrement: true });
+        if (!baseDatos.objectStoreNames.contains('ingresos')) 
+            baseDatos.createObjectStore('ingresos', { autoIncrement: true });
+        if (!baseDatos.objectStoreNames.contains('gastos')) 
+            baseDatos.createObjectStore('gastos', { autoIncrement: true });
+        if (!baseDatos.objectStoreNames.contains('debito')) 
+            baseDatos.createObjectStore('debito', { autoIncrement: true });
+        
+
+        if (!baseDatos.objectStoreNames.contains('credito')) 
+            baseDatos.createObjectStore('credito', { autoIncrement: true });
+          
+
     }
 
 }
