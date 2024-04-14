@@ -11,21 +11,21 @@
 
    
     <!--Desarrollo -->
-<!--     
-    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+    
+ <!--    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
     <script src="/lib/jquery/dist/jquery.min.js"></script>
     <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/site.js" asp-append-version="true"></script>
     <script src="/js/generic.js" asp-append-version="true"></script>
     <link rel="manifest" href="/manifest.json">
+    <link rel="shortcut icon" href="/favicon.ico"> -->
 
-    <link rel="shortcut icon" href="/favicon.ico">
- -->
 
       <!--Prodfuccion -->
  
-<link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
 <link rel="stylesheet" href="/gastos/css/site.css" asp-append-version="true" />
 <script src="/gastos/lib/jquery/dist/jquery.min.js"></script>
 <script src="/gastos/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -75,7 +75,7 @@
 
                 <div class="card mb-4 rounded-3 shadow-sm">
                     <div class="card-header py-3">
-                        <h4 class="my-0 fw-normal">Tarjeta</h4>
+                        <h4 class="my-0 fw-normal">Tarjeta Débito</h4>
                     </div>
                     <div class="card-body">    
                         <h1 id="lblTotal" class="card-title pricing-card-title">$0</h1>
@@ -83,7 +83,19 @@
                         <a class="w-100 btn btn-lg btn-danger mt-3" href="/gastos/Retiro" role="button">Retiro</a>
                         <a class="w-100 btn btn-lg btn-warning mt-3" href="/gastos/Transferencia" role="button">Transferencia</a>
                     </div>
-                </div>            
+                </div>         
+                
+                <div class="card mb-4 rounded-3 shadow-sm">
+                    <div class="card-header py-3">
+                        <h4 class="my-0 fw-normal">Tarjeta Crédito</h4>
+                    </div>
+                    <div class="card-body">    
+                        <h1 id="lblTotalCredito" class="card-title pricing-card-title">$0</h1>
+                        <a id="btnAbonos" class="w-100 btn btn-lg btn-success mt-3" href="/gastos/AbonosCredito" role="button">Abonos</a>
+                        <a id="btnGastos" class="w-100 btn btn-lg btn-danger mt-3" href="/gastos/GastosCredito" role="button">Gastos</a>
+                    </div>
+                </div>         
+
             </div>
         </main>
     </div>
@@ -137,6 +149,22 @@
                 puntero.continue();
             }
         }
+
+        clsBase.ObtieneDatos('credito').then(datos => {
+                //console.log('leer credito: ', JSON.stringify(datos));  // Aquí puedes usar los datos como necesites
+                const abonos = datos.filter(dato => dato.value.tipo === 'abono');
+                const gastos = datos.filter(dato => dato.value.tipo === 'gasto');
+                
+                let totalAbonos = abonos.reduce((suma, item) => suma + Number(item.value.importe), 0);
+                let totalGastos = gastos.reduce((suma, item) => suma + Number(item.value.importe), 0);
+                let totalCredito = totalAbonos - totalGastos;
+                document.getElementById('lblTotalCredito').innerHTML = `${formatCurrency(totalCredito)} <span class="text-danger float-end">Para Gastar</span>`;
+                document.getElementById('btnAbonos').innerHTML = `Abonos  <span class="text-white float-end">${formatCurrency(totalAbonos)}</span>`;
+                document.getElementById('btnGastos').innerHTML = `Gastos  <span class="text-white float-end">${formatCurrency(totalGastos)}</span>`;
+        }).catch(error => {
+            console.log('Error al obtener datos: ', error);
+        });       
+
 
         
     }

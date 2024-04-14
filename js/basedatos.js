@@ -75,6 +75,7 @@ class clsBaseDatos {
         let ingresos = baseDatos.createObjectStore('ingresos', { autoIncrement: true });
         let gastos = baseDatos.createObjectStore('gastos', { autoIncrement: true });
         let debito = baseDatos.createObjectStore('debito', { autoIncrement: true });
+        let credito = baseDatos.createObjectStore('credito', { autoIncrement: true });
     }
 
 }
