@@ -8,23 +8,25 @@
     <title>Mis Gastos</title>
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
    
     <!--Desarrollo -->
     
-<!--     <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
     <script src="/lib/jquery/dist/jquery.min.js"></script>
     <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/site.js" asp-append-version="true"></script>
     <script src="/js/generic.js" asp-append-version="true"></script>
     <link rel="manifest" href="/manifest.json">
-    <link rel="shortcut icon" href="/favicon.ico"> -->
+    <link rel="shortcut icon" href="/favicon.ico">
+    <script src="/js/global.js"></script>
  
 
 <!--Prodfuccion -->
 
-<link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
+<!-- <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
 <link rel="stylesheet" href="/gastos/css/site.css" asp-append-version="true" />
 <script src="/gastos/lib/jquery/dist/jquery.min.js"></script>
 <script src="/gastos/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -32,8 +34,9 @@
 <script src="/gastos/js/generic.js" asp-append-version="true"></script>
 <link rel="manifest" href="/gastos/manifest.json">
 <link rel="shortcut icon" href="/gastos/favicon.ico">
+<script src="/gastosjs/global.js"></script>
 
-
+ -->
 
     <!--PWA -->
     <!--<meta name="theme-color" content="#efde3e">
@@ -78,9 +81,16 @@
                     </div>
                     <div class="card-body">
                         <h1 id="lblTotal" class="card-title pricing-card-title">$0</h1>
-                        <input type="number" class="form-control form-control-lg mt-5" id="Importe" placeholder="Capture Importe" required="">
-                        <input type="text" class="form-control form-control-lg mt-1" id="Concepto" placeholder="Concepto" required="">
-                        <button type="button" onclick="Agregar()" class="w-100 btn btn-lg btn-primary mt-3">Agregar</button>
+                        <input type="number" class="form-control form-control-lg mt-5" id="Importe" placeholder="Capture Importe" required="">                     
+
+                        <select id="Fuente" class="form-select form-control form-control-lg mt-2" aria-label="Default select example">                          
+                        </select>
+
+
+                        <textarea class="form-control form-control-lg mt-3" id="Descripcion" placeholder="Descripción" rows="5" maxlength="500" required=""></textarea>
+                        <div id="contadorCaracteres" class="text-muted">Carácteres restantes: 500</div>
+                        <button type="button" onclick="Agregar()" class="w-100 btn btn-lg btn-primary mt-3"><i class="bi bi-plus-lg float-start"></i>Agregar</button>
+                        <button type="button" onclick="Limpiar()" class="w-100 btn btn-lg btn-secondary mt-3"><i class="bi bi-trash3 float-start"></i>Limpiar</button>
                     </div>
                 </div>
             
@@ -96,78 +106,153 @@
         </main>
     </div>
 
-    <script src="/gastos/app.js"></script>
+    <script src="/app.js"></script>
 
 
 </body>
 </html>
 
-<script src="/gastos/js/basedatos.js"></script>
+<script src="/js/basedatos.js"></script>
+<script src="/servicios/ingresos.js"></script>
+<script src="/servicios/fuentes.js"></script>
 <script type="text/javascript">
     const clsBase = new clsBaseDatos();
+    const ingresosSrv = new IngresosService();
+    const fuentesSrv = new FuentesService();
 
 
-    $(document).ready(function () {
-        if (!window.indexedDB) {
-            console.log("¡IndexedDB no es compatible!");
-        }
+    $(document).ready(async function () {
+        await CargarInformacion()
+        await LlenaComboFuentes();
 
-        
-
-        clsBase.IniciarBaseDatos(result => {
+       /*  clsBase.IniciarBaseDatos(result => {
             Totales();            
-        });
+        }); */
+
     });
 
+    document.getElementById('Descripcion').addEventListener('input', function() {
+        var descripcion = this.value;
+        var contador = document.getElementById('contadorCaracteres');
+        let libres = 500-descripcion.length;
+        contador.textContent = 'Carácteres restantes: ' + libres;
+
+        if (descripcion.length >= 500) {
+            this.value = descripcion.slice(0, 500);
+            this.disabled = true;
+        } else {
+            this.disabled = false;
+        }
+        
+        
+    });
+
+    function Limpiar() {
+        document.getElementById('lblTotal').textContent = '$0';
+        document.getElementById('Importe').value = '';
+        document.getElementById('Fuente').selectedIndex = 0;
+        document.getElementById('Descripcion').value = '';
+        document.getElementById('Descripcion').disabled = false;
+
+        document.getElementById('contadorCaracteres').textContent = 'Carácteres restantes: 500';
+    }
+
+    async function LlenaComboFuentes() {
+        const fuentes = await ObtenerFuentes();
+
+        let combo = document.getElementById('Fuente');
+        fuentes.forEach(fuente => {
+            let option = document.createElement('option');
+            option.value = fuente.id;
+            option.text = fuente.fuente;
+            combo.appendChild(option);
+        });
+
+        //console.log('fuentes: ', fuentes);
+    }
+
+    async function ObtenerDatosApi() {
+        try {
+            const response = await ingresosSrv.getItems();
+            const items = response.data;
+            const ingresos = items.map(item => {
+                return {
+                    id: item._id,
+                    importe: item.importe,
+                    fecha: item.fecha,
+                    fuente: item.fuente.fuente,
+                    descripcion: item.descripcion,
+                    usuario: item.usuario
+                };
+            });
+            return ingresos;
+        } catch (error) {
+            console.error('error api: ', error);
+            return null;
+        }
+    }
+
+    async function ObtenerFuentes() {
+        try {
+            const response = await fuentesSrv.getItems();
+            const items = response.data;
+            const data = items.map(item => {
+                return {
+                    id: item._id,                    
+                    fuente: item.fuente                    
+                };
+            });
+
+            return data;
+        } catch (error) {
+            console.error('error leer fuentes: ', error);
+            return null;
+        }
+    }
     
-    function Totales() {
-        document.getElementById('lblTotal').innerHTML = `$0.00`;
+
+    function LlenarGrid(datos) {
         document.getElementById('Movimientos').innerHTML = '';
+        
+        datos = datos.sort((a, b) => b.fecha - a.fecha);
+        datos.forEach(dato => {
+            // Use the dato as needed
+            //console.log('dato: ',dato);
+            let boton =``;
+            if(dato.id != null){
+                boton = `<div class="col-2">
+                                <button type="button" class="btn btn-sm btn-danger" onclick="Quitar('${dato.id}','${dato.descripcion}',${dato.importe});">Quitar</button>
+                        </div>`;
+            }
 
-        clsBase.ObtieneDatos('ingresos').then(datos => {
-                //console.log('leer: ', JSON.stringify(datos));  // Aquí puedes usar los datos como necesites
-                datos = datos.sort((a, b) => b.value.fecha - a.value.fecha);
+            Totales(datos);
 
-                let total = datos.reduce((suma, item) => suma + Number(item.value.importe), 0);
-                document.getElementById('lblTotal').innerHTML = `${formatCurrency(total)}`;
-
-                // Access each element in the datos array
-                datos.forEach(dato => {
-                    // Use the dato as needed
-                    //console.log('dato: ',dato);
-                    let boton =``;
-                    if(dato.value.keyretiro == null){
-                        boton = `<div class="col-2">
-                                        <button type="button" class="btn btn-sm btn-danger" onclick="Quitar(${dato.key});">Quitar</button>
-                                </div>`;
-                    }
-                    
-                    document.getElementById('Movimientos').innerHTML +=
+            document.getElementById('Movimientos').innerHTML +=
                     `<div class="row p-1">
-                        <div class="col-3"><small>${formatCurrency(parseFloat(dato.value.importe))}</small>
+                        <div class="col-3"><small>${formatCurrency(parseFloat(dato.importe))}</small>
                             </div>
-                            <div class="col-4"><small>${dato.value.concepto}</small>
+                            <div class="col-4"><small>${dato.descripcion}</small>
                             </div>
-                            <div class="col-3"><small>${new Date(dato.value.fecha).toLocaleDateString()}</small>
+                            <div class="col-3"><small>${new Date(dato.fecha).toLocaleDateString()}</small>
                             </div>
                             ${boton}
                     </div>
                     `;
-                });
-            }).catch(error => {
-                console.log('Error al obtener datos: ', error);
-            });       
+
+
+        });
+
+    }
+    
+    function Totales(datos) {
+        document.getElementById('lblTotal').innerHTML = `$0.00`;
+        let total = datos.reduce((suma, item) => suma + Number(item.importe), 0);
+        document.getElementById('lblTotal').innerHTML = `${formatCurrency(total)}`;        
     }
 
-    function Quitar(key) {
-        let transaccion = base.transaction(['ingresos'], 'readwrite');
-        let ingresos = transaccion.objectStore('ingresos');
-
+    function Quitar(id,descripcion,importe) {
         try {
-            let request = ingresos.get(key);
-            request.onsuccess = function(event) {
-                let data = event.target.result;
-                let pregunta = `¿Desea quitar el importe de ${formatCurrency(parseFloat(data.importe))} con concepto ${data.concepto}?`;
+            let pregunta = `¿Desea quitar el importe de ${formatCurrency(parseFloat(importe))} con concepto ${descripcion}?`;
                 Swal.fire({
                     title: 'Aviso',
                     text: pregunta,
@@ -175,19 +260,13 @@
                     showCancelButton: true,
                     confirmButtonText: 'Si',
                     cancelButtonText: 'No'
-                }).then((result) => {
+                }).then(async (result) => {
                     if (result.isConfirmed) {
-                        let transaccion = base.transaction(['ingresos'], 'readwrite');
-                        let ingresos = transaccion.objectStore('ingresos');
-                        let deleteRequest = ingresos.delete(key);
-                        deleteRequest.onsuccess = function() {
-                            transaccion.oncomplete = function () {
-                                Totales();
-                            }
-                        };
+                        await ingresosSrv.deleteItem(id);
+                        await CargarInformacion();
                     }
                 });
-            };
+
         } catch (error) {
             console.log('error: ',error);
         }
@@ -196,12 +275,15 @@
         
     }
 
+    async function CargarInformacion() {
+        const datos = await ObtenerDatosApi();
+        Limpiar();
+        LlenarGrid(datos);    
+    }
 
-    function Agregar() {
-        let transaccion = base.transaction(['ingresos'], 'readwrite');
-        let ingresos = transaccion.objectStore('ingresos');
-        let importe = document.getElementById('Importe').value;
-        let concepto = document.getElementById('Concepto').value;
+
+    async function Agregar() {      
+        let importe = document.getElementById('Importe').value;        
 
         if (importe == '') {
             Swal.fire({
@@ -210,39 +292,34 @@
             });
             return;
         }
-        if (concepto == '') {
+      /*   if (concepto == '') {
             Swal.fire({
                 title: "Capture un concepto",
                 icon: "warning"
             });
             return;
-        }
+        } */
 
         //console.log('Importe: ', importe);
+        let obj = {
+            importe: importe,
+            fecha: Date.now(),
+            fuente: document.getElementById('Fuente').value,
+            descripcion: document.getElementById('Descripcion').value,
+            usuario: '' // Reemplaza esto con el valor real del usuario
+        };
+        //let ingresoJson = JSON.stringify(ingreso);
 
-        let ingreso = { importe: importe, concepto: concepto, fecha: Date.now(), keyretiro: null };
-        ingresos.add(ingreso);
+        const response = await ingresosSrv.createItem(obj);        
+      
 
-        transaccion.oncomplete = function () {
-            Swal.fire({
-                title: "Aviso",
-                text: "Guardado correctamente",
-                icon: "info"
-            });
-            document.getElementById('Importe').value = null;
-            document.getElementById('Concepto').value = null;
-            document.getElementById('Importe').focus();
-            Totales();
-        }
-
-        transaccion.onerror = function (evento) {
-            Swal.fire({
-                title: "Error al Abrir Base de Datos",
-                text: evento.target.errorCode,
-                icon: "warning"
-            });
-        }
-
+        Swal.fire({
+                    title: "Éxito",
+                    text: "La información ha sido guardada correctamente",
+                    icon: "success"
+                });
+        
+        await CargarInformacion();
     }
 
 

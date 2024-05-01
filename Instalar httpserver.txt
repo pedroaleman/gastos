@@ -4,6 +4,9 @@
     > cd "C:\GITHUB\MisGastos"
     > http-server
 
+    *Este comando muestra con la caché desactivada, para mostrar siempre la ultima versión
+        > http-server -c-1
+
     --Si estuviera ocupado elpuerto 8080, se puede abrir otro puerto
         > http-server -p 8081
 
