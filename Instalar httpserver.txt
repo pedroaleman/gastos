@@ -14,3 +14,22 @@
     Abrri en el navegador:
         http://localhost:8080
         
+
+
+* Para hacer que recargue la página en automatico
+
+    - Instalar:
+        > npm install -g browser-sync
+
+    - Para correr la pagina:
+        http-server -c-1 8080
+        browser-sync start --proxy "localhost:8080" --files "./*.html, ./*.css, ./*.js"
+
+* Para tumbar browsersync
+
+    - En msdos buscar los PID para hacer kill
+        > netstat -ano | findstr :3000
+        > netstat -ano | findstr :3001
+
+        - hacer kill 
+            > taskkill /PID 16832 /F

@@ -7,7 +7,6 @@
     <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="black">
     <title>Mis Gastos</title>
     
-    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
@@ -75,36 +74,25 @@
     <div class="container">
         <main role="main" class="pb-3">
             <div class="container p-1">
-                <div class="alert alert-primary" role="alert">
-                    Operaciones con Tarjetas
-                  </div>
 
                 <div class="card mb-4 rounded-3 shadow-sm">
                     <div class="card-header py-3">
-                        <h2 class="my-0 fw-normal text-center">Ingresos</h2>
+                        <h2 class="my-0 fw-normal text-center">Salidas de Efectivo</h2>
                     </div>
                     <div class="card-body">
                         <h1 id="lblTotal" class="card-title pricing-card-title">$0</h1>
                         <input type="number" class="form-control form-control-lg mt-5" id="Importe" placeholder="Capture Importe" required="">                     
 
-                        <div class="form-group mt-3">
-                            <label for="Categoria" class="fw-bold">Fuente de Ingreso</label>
-                            <select id="Categoria" class="form-select form-control form-control-lg mt-2" aria-label="Default select example">                          
-                            </select>
-                        </div>
-
-                        <div class="form-group mt-3">
-                            <label for="Tarjeta" class="fw-bold">Tarjeta</label>
-                            <select id="Tarjeta" class="form-select form-control form-control-lg mt-2" aria-label="Default select example">                          
-                            </select>
-                        </div>
-                      
+                        <select id="Categoria" class="form-select form-control form-control-lg mt-2" aria-label="Default select example">                          
+                        </select>
 
 
                         <textarea class="form-control form-control-lg mt-3" id="Descripcion" placeholder="Descripción" rows="5" maxlength="500" required=""></textarea>
                         <div id="contadorCaracteres" class="text-muted">Carácteres restantes: 500</div>
                         <button type="button" onclick="Agregar()" class="w-100 btn btn-lg btn-primary mt-3"><i class="bi bi-plus-lg float-start"></i>Agregar</button>
                         <button type="button" onclick="Limpiar()" class="w-100 btn btn-lg btn-secondary mt-3"><i class="bi bi-trash3 float-start"></i>Limpiar</button>
+                        <a href="/gastos/Efectivo" class="w-100 btn btn-lg btn-dark mt-5 text-white"><i class="bi bi-arrow-left float-start"></i>Regresar</a>
+
                     </div>
                 </div>
             
@@ -126,25 +114,23 @@
 </body>
 </html>
 
-
-<script src="/servicios/transacciones.js"></script>
-<script src="/servicios/bancos.js"></script>
+<script src="/js/basedatos.js"></script>
+<script src="/servicios/efectivo.js"></script>
 <script src="/servicios/categorias.js"></script>
-<script src="/servicios/tarjetas.js"></script>
-
-<script type="text/javascript">    
-    const transaccionesSrv = new TransaccionesService();
+<script type="text/javascript">
+    const clsBase = new clsBaseDatos();
+    const efectivoSrv = new EfectivoService();
     const categoriasSrv = new CategoriasService();
-    const tarjetaSrv = new TarjetasService();
-    const bancosSrv = new BancosService();
-
 
 
     $(document).ready(async function () {
         await CargarInformacion()
         await LlenaComboCategorias();
-        await LlenaComboTarjetas();
-      
+
+       /*  clsBase.IniciarBaseDatos(result => {
+            Totales();            
+        }); */
+
     });
 
     document.getElementById('Descripcion').addEventListener('input', function() {
@@ -187,41 +173,23 @@
         //console.log('categorias: ', categorias);
     }
 
-    async function LlenaComboTarjetas() {
-        const tarjetas = await ObtenerTarjetas();
-
-        let combo = document.getElementById('Tarjeta');
-        tarjetas.forEach(tarjeta => {
-            let option = document.createElement('option');
-            option.value = tarjeta.id;
-            option.text = tarjeta.tipo + ' - ' + tarjeta.banco + ' - ' + tarjeta.numerotarjeta;
-            combo.appendChild(option);
-        });
-
-        //console.log('tarjetas: ', tarjetas);
-    }
-
     async function ObtenerDatosApi() {
         try {
-            const responsebancos = await bancosSrv.getItems();
-            const itemsBancos = responsebancos.data;
-            //console.log('itemsBancos api: ', itemsBancos);
-
-            const response = await transaccionesSrv.getItems();
+            const response = await efectivoSrv.getItems();
             const items = response.data;
-            //console.log('items api: ', items);
-            const transacciones = items.map(item => {
+            const filtrados = items.filter(item => item.tipo === 'Salida');
+            const ingresos = filtrados.map(item => {
                 return {
                     id: item._id,
                     importe: item.importe,
                     fecha: item.fecha,
+                    tipo: item.tipo,
                     categoria: item.categoria.categoria,
                     descripcion: item.descripcion,
-                    tarjeta: item.tarjeta.tipo + ' - ' + itemsBancos.find(banco => banco._id === item.tarjeta.banco).banco,
                     usuario: item.usuario
                 };
             });
-            return transacciones;
+            return ingresos;
         } catch (error) {
             console.error('error api: ', error);
             return null;
@@ -232,7 +200,7 @@
         try {
             const response = await categoriasSrv.getItems();
             const items = response.data;
-            const data = items.filter(item => item.tipo === 'Abono').map(item => {
+            const data = items.filter(item => item.tipo === 'Gasto' || item.tipo === 'Pago').map(item => {
                 return {
                     id: item._id,
                     categoria: item.categoria,
@@ -242,28 +210,7 @@
 
             return data;
         } catch (error) {
-            console.error('error leer categorias: ', error);
-            return null;
-        }
-    }
-
-    async function ObtenerTarjetas() {
-        try {
-            const response = await tarjetaSrv.getItems();
-            const items = response.data;
-            const data = items.map(item => {
-                return {
-                    id: item._id,
-                    numerotarjeta: item.numerotarjeta,
-                    nombretitular: item.nombretitular,
-                    banco: item.banco.banco,
-                    tipo: item.tipo
-                };
-            });
-
-            return data;
-        } catch (error) {
-            console.error('error leer tarjetas: ', error);
+            console.error('error leer fuentes: ', error);
             return null;
         }
     }
@@ -279,7 +226,7 @@
             let boton =``;
             if(dato.id != null){
                 boton = `<div class="col-2">
-                                <button type="button" class="btn btn-sm btn-danger" onclick="Quitar('${dato.id}','${dato.tarjeta}',${dato.importe});">Quitar</button>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="Quitar('${dato.id}','${dato.descripcion}',${dato.importe});">Quitar</button>
                         </div>`;
             }
 
@@ -289,7 +236,7 @@
                     `<div class="row p-1">
                         <div class="col-3"><small>${formatCurrency(parseFloat(dato.importe))}</small>
                             </div>
-                            <div class="col-4"><small>${dato.tarjeta}</small>
+                            <div class="col-4"><small>${dato.descripcion}</small>
                             </div>
                             <div class="col-3"><small>${new Date(dato.fecha).toLocaleDateString()}</small>
                             </div>
@@ -308,11 +255,9 @@
         document.getElementById('lblTotal').innerHTML = `${formatCurrency(total)}`;        
     }
 
-    function Quitar(id,tarjeta,importe) {
-        //console.log('quitar: ',id,tarjeta,importe);
-        Swal.fire('Hello world!')
+    function Quitar(id,descripcion,importe) {
         try {
-            let pregunta = `¿Desea quitar el importe de ${formatCurrency(parseFloat(importe))} de la tarjeta ${tarjeta}?`;
+            let pregunta = `¿Desea quitar el importe de ${formatCurrency(parseFloat(importe))} con concepto ${descripcion}?`;
                 Swal.fire({
                     title: 'Aviso',
                     text: pregunta,
@@ -322,7 +267,7 @@
                     cancelButtonText: 'No'
                 }).then(async (result) => {
                     if (result.isConfirmed) {
-                        await transaccionesSrv.deleteItem(id);
+                        await efectivoSrv.deleteItem(id);
                         await CargarInformacion();
                     }
                 });
@@ -364,13 +309,14 @@
         let obj = {
             importe: importe,
             fecha: Date.now(),
-            fuente: document.getElementById('Fuente').value,
+            tipo : 'Salida',
+            categoria: document.getElementById('Categoria').value,
             descripcion: document.getElementById('Descripcion').value,
             usuario: '' // Reemplaza esto con el valor real del usuario
         };
         //let ingresoJson = JSON.stringify(ingreso);
 
-        const response = await transaccionesSrv.createItem(obj);        
+        const response = await efectivoSrv.createItem(obj);        
       
 
         Swal.fire({

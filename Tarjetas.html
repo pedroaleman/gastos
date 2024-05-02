@@ -1,0 +1,332 @@
+﻿<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="white">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="black">
+    <title>Mis Gastos</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+   
+    <!--Desarrollo -->
+    
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
+    <script src="/lib/jquery/dist/jquery.min.js"></script>
+    <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/site.js" asp-append-version="true"></script>
+    <script src="/js/generic.js" asp-append-version="true"></script>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <script src="/js/global.js"></script>
+ 
+
+<!--Prodfuccion -->
+
+<!-- <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="/gastos/css/site.css" asp-append-version="true" />
+<script src="/gastos/lib/jquery/dist/jquery.min.js"></script>
+<script src="/gastos/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/gastos/js/site.js" asp-append-version="true"></script>
+<script src="/gastos/js/generic.js" asp-append-version="true"></script>
+<link rel="manifest" href="/gastos/manifest.json">
+<link rel="shortcut icon" href="/gastos/favicon.ico">
+<script src="/gastosjs/global.js"></script>
+
+ -->
+
+    <!--PWA -->
+    <!--<meta name="theme-color" content="#efde3e">
+    <meta name="MobileOptimized" content="width">
+    <meta name="HandheldFriendly" content="true">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="shortcut icon" type="image/png" href="/Imagenes/Logo.png">-->
+    <!-- Android -->
+    <meta name="theme-color" content="#000000">
+
+    <!-- IOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+</head>
+<body>   
+    <header class="p-3 bg-dark text-white">
+        <div class="container">
+            <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+                <a href="/gastos/" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+                    <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap"><use xlink:href="#bootstrap"></use></svg>
+                </a>
+
+                <ul id="menuPrincipal" class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+                    <li><a href="/gastos/" class="nav-link px-2 text-white">Inicio</a></li>
+                    <li><a href="/gastos/Ingresos" class="nav-link px-2 text-white">Ingresos</a></li>
+                    <li><a href="/gastos/Gastos" class="nav-link px-2 text-white">Gastos</a></li>
+                    <li><a href="/gastos/Tarjeta" class="nav-link px-2 text-white">Tarjeta</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            <div class="container p-1">
+
+                <div class="card mb-4 rounded-3 shadow-sm">
+                    <div class="card-header py-3">
+                        <h2 class="my-0 fw-normal text-center">Alta de Tarjetas Bancarias</h2>
+                    </div>
+                    <div class="card-body p-1">                     
+                        <div class="form-group">
+                            <label for="numerotarjeta" class="fw-bold">Número de Tarjeta</label>
+                            <input type="number" class="form-control" id="numerotarjeta" placeholder="Ingrese el número de tarjeta" required maxlength="16">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nombretitular" class="fw-bold">Nombre del Titular</label>
+                            <input type="text" class="form-control" id="nombretitular" placeholder="Ingrese el nombre del titular" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fechavencimiento" class="fw-bold">Fecha de Vencimiento</label>
+                            <input type="date" class="form-control" id="fechavencimiento" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tipo" class="fw-bold">Tipo de Tarjeta</label>
+                            <select class="form-select form-control form-control-lg mt-2" id="tipo" required>
+                                <option value="Debito">Débito</option>
+                                <option value="Credito">Crédito</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="banco" class="fw-bold">Banco</label>
+                            <select id="Banco" class="form-select form-control form-control-lg mt-2" aria-label="Default select example">                          
+                            </select>
+                        </div>
+                        <button type="button" onclick="Agregar()" class="w-100 btn btn-lg btn-primary mt-3"><i class="bi bi-plus-lg float-start"></i>Agregar</button>
+                        <button type="button" onclick="Limpiar()" class="w-100 btn btn-lg btn-secondary mt-3"><i class="bi bi-trash3 float-start"></i>Limpiar</button>
+                    </div>
+                </div>
+            
+                <hr class="my-4">
+            
+                <div class="card text-dark mb-3">
+                    <div class="card-header bg-warning"><h5 class="card-title text-center">Lista de Tarjetas</h5></div>
+                    <div id="Movimientos" class="card-body">
+                    </div>
+                </div>
+            
+            </div>
+        </main>
+    </div>
+
+    <script src="/app.js"></script>
+
+
+</body>
+</html>
+
+<script src="/js/basedatos.js"></script>
+<script src="/servicios/tarjetas.js"></script>
+<script src="/servicios/bancos.js"></script>
+<script type="text/javascript">
+    const clsBase = new clsBaseDatos();
+    const tarjetasSrv = new TarjetasService();
+    const bancosSrv = new BancosService();
+
+
+    $(document).ready(async function () {
+        await CargarInformacion()
+        await LlenaComboBancos();      
+    });
+
+  
+
+   
+
+    function Limpiar() {
+        document.getElementById('numerotarjeta').value = '';
+        document.getElementById('nombretitular').value = '';
+        document.getElementById('fechavencimiento').value = '';
+        document.getElementById('tipo').selectedIndex = 0;
+        document.getElementById('Banco').selectedIndex = 0;
+    }
+    async function LlenaComboBancos() {
+        const bancos = await ObtenerBancos();
+
+        let combo = document.getElementById('Banco');
+        bancos.forEach(banco => {
+            let option = document.createElement('option');
+            option.value = banco.id;
+            option.text = banco.banco;
+            combo.appendChild(option);
+        });
+
+        //console.log('bancos: ', bancos);
+    }
+
+    async function ObtenerDatosApi() {
+        try {
+            const response = await tarjetasSrv.getItems();
+            //console.log('object: ', JSON.stringify( response.data));
+           
+
+            const items = response.data;
+            const datos = items.map(item => {
+                return {
+                    id: item._id,
+                    numerotarjeta: item.numerotarjeta,
+                    nombretitular: item.nombretitular,
+                    fechavencimiento: item.fechavencimiento,
+                    tipo: item.tipo,
+                    banco: item.banco.banco
+                };
+            });
+
+            return datos;
+        } catch (error) {
+            console.error('error api: ', error);
+            return null;
+        }
+    }
+
+    async function ObtenerBancos() {
+        try {
+            const response = await bancosSrv.getItems();
+            const items = response.data;
+            const data = items.map(item => {
+                return {
+                    id: item._id,                    
+                    banco: item.banco,
+                    nombre: item.nombre
+                };
+            });
+
+            return data;
+        } catch (error) {
+            console.error('error leer bancos: ', error);
+            return null;
+        }
+    }
+    
+
+    function LlenarGrid(datos) {
+        document.getElementById('Movimientos').innerHTML = '';
+        
+        datos = datos.sort((a, b) => b.fecha - a.fecha);
+        datos.forEach(dato => {
+            // Use the dato as needed
+            //console.log('dato: ',dato);
+            let boton =``;
+            if(dato.id != null){
+                boton = `<div class="col-2">
+                                <button type="button" class="btn btn-sm btn-danger" onclick="Quitar('${dato.id}','${dato.banco}',${dato.numerotarjeta});">Quitar</button>
+                        </div>`;
+            }
+
+
+            document.getElementById('Movimientos').innerHTML +=
+                    `<div class="row p-1">                       
+                        <div class="col-3"><small>${dato.banco}</small>
+                        </div>
+                        <div class="col-7"><small>${dato.numerotarjeta}</small>
+                        </div>                           
+                        ${boton}
+                    </div>
+                    `;
+
+
+        });
+
+    }
+    
+   
+
+    function Quitar(id,banco,numerotarjeta) {
+        try {
+            let pregunta = `¿Desea quitar la tarjeta ${banco} - ${numerotarjeta}?`;
+                Swal.fire({
+                    title: 'Aviso',
+                    text: pregunta,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Si',
+                    cancelButtonText: 'No'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        await tarjetasSrv.deleteItem(id);
+                        await CargarInformacion();
+                    }
+                });
+
+        } catch (error) {
+            console.log('error: ',error);
+        }
+
+        
+        
+    }
+
+    async function CargarInformacion() {
+        const datos = await ObtenerDatosApi();
+        Limpiar();
+        LlenarGrid(datos);    
+    }   
+
+    async function Agregar() {      
+        let numerotarjeta = document.getElementById('numerotarjeta').value;
+        let nombretitular = document.getElementById('nombretitular').value;
+        let fechavencimiento = document.getElementById('fechavencimiento').value;
+        let tipo = document.getElementById('tipo').value;
+        let banco = document.getElementById('Banco').value;
+
+        if (numerotarjeta.length == 0) {
+            MostrarError("Capture número de tarjeta de 16 dígitos");           
+            return;
+        }
+        if (numerotarjeta.length !== 16) {
+            MostrarError("El número de tarjeta debe tener 16 dígitos");           
+            return;
+        }
+       
+        if (nombretitular.trim() === '') {
+            MostrarError("Capture el nombre del titular");
+            return;
+        }
+
+        if (fechavencimiento.trim() === '') {
+            MostrarError("Seleccione una fecha de vencimiento");
+            return;
+        }
+
+        let obj = {
+            numerotarjeta: numerotarjeta,
+            nombretitular: nombretitular,
+            fechavencimiento: fechavencimiento,
+            tipo: tipo,
+            banco: banco
+        };
+
+        
+
+        //let ingresoJson = JSON.stringify(ingreso);
+
+        const response = await tarjetasSrv.createItem(obj);        
+        MostrarExito("La información ha sido guardada correctamente");
+   
+        await CargarInformacion();
+    }
+
+
+    // function Cerrar() {
+    //     localStorage.removeItem('session');
+    //     let url = location.origin + '/Home/Inicio';
+    //     window.location.href = url;
+    // }
+
+</script>

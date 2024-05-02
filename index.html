@@ -23,6 +23,10 @@
     <script src="/js/generic.js" asp-append-version="true"></script>
     <link rel="manifest" href="/manifest.json"> 
     <link rel="shortcut icon" href="/favicon.ico">
+    <script src="/js/global.js"></script>  
+ 
+    
+ 
 
 
 
@@ -36,6 +40,7 @@
     <script src="/gastos/js/generic.js" asp-append-version="true"></script>
     <link rel="manifest" href="/gastos/manifest.json">
     <link rel="shortcut icon" href="/gastos/favicon.ico">
+    <script src="/gastosjs/global.js"></script>
   -->
 
     <!--PWA -->
@@ -77,6 +82,17 @@
         <main role="main" class="pb-3">
             <div class="container p-1">
 
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Efectivo Disponible</h5>
+                    </div>
+                    <div class="card-body">                     
+                        <div class="p-3 mb-2 text-center bg-dark text-white">
+                            <h1 id="EfectivoDisponible">$0.00</h1>
+                        </div>
+                    </div>
+                  </div>
+
                 <div class="card mb-4 rounded-3 shadow-sm">
                     <div class="card-header"><h5 class="card-title">Saldo</h5></div>
                     <div class="card-body">
@@ -86,10 +102,7 @@
                         <div class="p-3 mb-2 text-center bg-danger text-white">
                             <h1 id="Gasto">$0.00</h1>
                         </div>
-                        <div class="p-3 mb-2 bg-transparent text-dark">Disponible</div>
-                        <div class="p-3 mb-2 text-center bg-dark text-white">
-                            <h1 id="Saldo">$0.00</h1>
-                        </div>
+                        
 
                         <div class="p-3 mb-2 bg-transparent text-dark">Efectivo + Tarjeta</div>
                         <div class="p-3 mb-2 text-center bg-primary text-white">
@@ -99,8 +112,7 @@
                 </div>              
             </div>
         </main>
-<!-- 
-        <button type="button" class="btn btn-link" onclick="Limpiar();">Limpiar Todo</button> -->
+
 
     </div>
 
@@ -110,132 +122,55 @@
 </body>
 </html>
 
-<script src="/js/basedatos.js"></script>
+<!-- <script src="/js/basedatos.js"></script> -->
+<script src="/servicios/efectivo.js"></script>
 <script type="text/javascript">
-    const clsBase = new clsBaseDatos();
+    //const clsBase = new clsBaseDatos();
+    const efectivoSrv = new EfectivoService();
     
 
-    $(document).ready(function () {
-        if (!window.indexedDB) {
-            console.log("¡IndexedDB no es compatible!");
-        }
-
-        
-    
-
-
-
-        clsBase.IniciarBaseDatos(result => {
-            Totales();
-        });
+    $(document).ready(async function () {   
+        await CargarInformacion();
     });
 
-    async function Limpiar(){       
-        base.close();
-
-        var req = indexedDB.deleteDatabase('controldb');
-                req.onsuccess = function () {
-                    console.log("Deleted database successfully");
-                    Swal.fire({
-                    title: "Se eliminó información correctamente",                
-                    icon: "info"
-                });
-                };
-                req.onerror = function () {
-                    console.log("Couldn't delete database");
-                        Swal.fire({
-                        title: "No se pudo eliminar base de datos",                
-                        icon: "error"
-                    });
-                };
-                req.onblocked = function () {
-                    console.log("Couldn't delete database due to the operation being blocked");
-                    console.log("Couldn't delete database");
-                        Swal.fire({
-                        title: "No se pudo eliminar la base de datos debido a que la operación estaba bloqueada",                
-                        icon: "error"
-                        });
-                };
+    async function CargarInformacion() {
+        Limpiar();  
+        const datos = await ObtenerDatosApi();
     }
 
-    function Totales() {
-        document.getElementById('Ingreso').innerHTML = `$0.00`;
-        document.getElementById('Gasto').innerHTML = `$0.00`;
-        document.getElementById('Saldo').innerHTML = `$0.00`;
-        document.getElementById('Total').innerHTML = `$0.00`;
+    function Limpiar() {
+        document.getElementById('EfectivoDisponible').innerHTML = `$0.00`;
+    }
 
-        //Ingresos
-        let transaccion = base.transaction(['ingresos']);
-        let ingresos = transaccion.objectStore('ingresos');
-        let puntero = ingresos.openCursor();
-        let totalIngresos = 0;
-        let totalGastos = 0;
-        let totalTarjeta = 0;
-        puntero.onsuccess = function (evento) {
-            let puntero = evento.target.result;
-            if (puntero) {
-                totalIngresos += parseFloat(puntero.value.importe);
-                Saldo(totalIngresos, totalGastos,totalTarjeta);
-                puntero.continue();
-            }
+    async function ObtenerDatosApi() {
+        try {
+            const responseEfectivo = await efectivoSrv.getItems();
+            const items = responseEfectivo.data;
+            const entradas = items.filter(item => item.tipo === 'Entrada');
+            const salidas = items.filter(item => item.tipo === 'Salida');
+
+            const totalEntradas = entradas.reduce((total, item) => total + item.importe, 0);
+            const totalSalidas = salidas.reduce((total, item) => total + item.importe, 0);
+
+            //console.log('valors: ',totalEntradas,totalSalidas);
+
+            //Calcular Totales
+            //document.getElementById('EfectivoDisponible').innerHTML = `$0.00`;
+            document.getElementById('EfectivoDisponible').innerHTML = `${formatCurrency(totalEntradas - totalSalidas)}`;
+
+            
+            //return ingresos;
+        } catch (error) {
+            console.error('error api: ', error);
+            //return null;
         }
-
-        //Gastos
-        let transaccion2 = base.transaction(['gastos']);
-        let gastos = transaccion2.objectStore('gastos');
-        let puntero2 = gastos.openCursor();
-        
-        puntero2.onsuccess = function (evento) {
-            let puntero2 = evento.target.result;
-            if (puntero2) {
-                totalGastos += parseFloat(puntero2.value.importe);
-                Saldo(totalIngresos, totalGastos,totalTarjeta);
-                puntero2.continue();
-            }
-        }  
-
-        //Tarjeta
-        let transaccion3 = base.transaction(['debito']);
-        let objDebito = transaccion3.objectStore('debito');
-        let puntero3 = objDebito.openCursor();
-        let totalDeposito = 0;
-        let totalRetiro = 0;
-        let totalTransferencia = 0;
-        
-        puntero3.onsuccess = function (evento) {
-            let puntero3 = evento.target.result;
-            if (puntero3) {
-                if(puntero3.value.tipo == 'deposito')
-                    totalDeposito += parseFloat(puntero3.value.importe);
-                if(puntero3.value.tipo == 'retiro')
-                    totalRetiro += parseFloat(puntero3.value.importe);
-                if(puntero3.value.tipo == 'transferencia')
-                    totalTransferencia += parseFloat(puntero3.value.importe);
-
-                //console.log('totales: ',totalDeposito , totalRetiro , totalTransferencia)
-                totalTarjeta = totalDeposito - totalRetiro - totalTransferencia;
-                Saldo(totalIngresos, totalGastos,totalTarjeta);
-                puntero3.continue();
-            }
-        }
-
-        
-        Saldo(totalIngresos, totalGastos,totalTarjeta);
-        
-
-
     }
 
-    function Saldo(totalIngresos, totalGastos, totalTarjeta) {
-        let saldo =  totalIngresos - totalGastos;
-        //console.log('saldo: ', totalIngresos, totalGastos, saldo,totalTarjeta)
 
-        document.getElementById('Ingreso').innerHTML = `${formatCurrency(totalIngresos)}`;
-        document.getElementById('Gasto').innerHTML = `${formatCurrency(totalGastos)}`;
-        document.getElementById('Saldo').innerHTML = `${formatCurrency(saldo)}`;
-        document.getElementById('Total').innerHTML = `${formatCurrency(saldo + totalTarjeta)}`;
-       
-    }
+    
+
+    
+ 
 
    
 </script>
