@@ -14,7 +14,7 @@
    
     <!--Desarrollo -->
     
-    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+  <!--   <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
     <script src="/lib/jquery/dist/jquery.min.js"></script>
     <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -24,10 +24,11 @@
     <link rel="shortcut icon" href="/favicon.ico">
     <script src="/js/global.js"></script>
  
-
+ -->
 <!--Prodfuccion -->
 
-<!-- <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
 <link rel="stylesheet" href="/gastos/css/site.css" asp-append-version="true" />
 <script src="/gastos/lib/jquery/dist/jquery.min.js"></script>
 <script src="/gastos/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -37,7 +38,7 @@
 <link rel="shortcut icon" href="/gastos/favicon.ico">
 <script src="/gastosjs/global.js"></script>
 
- -->
+
 
     <!--PWA -->
     <!--<meta name="theme-color" content="#efde3e">
@@ -55,7 +56,7 @@
 </head>
 <body>   
     <header class="p-3 bg-dark text-white">
-        <div class="container">
+        
             <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
                 <a href="/gastos/" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
                     <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap"><use xlink:href="#bootstrap"></use></svg>
@@ -63,12 +64,13 @@
 
                 <ul id="menuPrincipal" class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
                     <li><a href="/gastos/" class="nav-link px-2 text-white">Inicio</a></li>
+                    <li><a href="/gastos/Efectivo" class="nav-link px-2 text-white">Efectivo</a></li>
                     <li><a href="/gastos/Ingresos" class="nav-link px-2 text-white">Ingresos</a></li>
                     <li><a href="/gastos/Gastos" class="nav-link px-2 text-white">Gastos</a></li>
-                    <li><a href="/gastos/Tarjeta" class="nav-link px-2 text-white">Tarjeta</a></li>
+                    <li><a href="/gastos/Tarjetas" class="nav-link px-2 text-white">Tarjetas</a></li>
                 </ul>
             </div>
-        </div>
+       
     </header>
 
 
@@ -120,17 +122,17 @@
         </main>
     </div>
 
-    <script src="/app.js"></script>
+    <script src="/gastos/app.js"></script>
 
 
 </body>
 </html>
 
 
-<script src="/servicios/transacciones.js"></script>
-<script src="/servicios/bancos.js"></script>
-<script src="/servicios/categorias.js"></script>
-<script src="/servicios/tarjetas.js"></script>
+<script src="/gastos/servicios/transacciones.js"></script>
+<script src="/gastos/servicios/bancos.js"></script>
+<script src="/gastos/servicios/categorias.js"></script>
+<script src="/gastos/servicios/tarjetas.js"></script>
 
 <script type="text/javascript">    
     const transaccionesSrv = new TransaccionesService();
@@ -216,12 +218,17 @@
                     importe: item.importe,
                     fecha: item.fecha,
                     categoria: item.categoria.categoria,
+                    tipo: item.categoria.tipo,
                     descripcion: item.descripcion,
                     tarjeta: item.tarjeta.tipo + ' - ' + itemsBancos.find(banco => banco._id === item.tarjeta.banco).banco,
                     usuario: item.usuario
                 };
             });
-            return transacciones;
+
+            const transaccionesAbono = transacciones.filter(transaccion => transaccion.tipo === 'Abono');
+
+
+            return transaccionesAbono;
         } catch (error) {
             console.error('error api: ', error);
             return null;
@@ -289,7 +296,7 @@
                     `<div class="row p-1">
                         <div class="col-3"><small>${formatCurrency(parseFloat(dato.importe))}</small>
                             </div>
-                            <div class="col-4"><small>${dato.tarjeta}</small>
+                            <div class="col-4"><small>${dato.descripcion}</small>
                             </div>
                             <div class="col-3"><small>${new Date(dato.fecha).toLocaleDateString()}</small>
                             </div>
@@ -310,7 +317,6 @@
 
     function Quitar(id,tarjeta,importe) {
         //console.log('quitar: ',id,tarjeta,importe);
-        Swal.fire('Hello world!')
         try {
             let pregunta = `¿Desea quitar el importe de ${formatCurrency(parseFloat(importe))} de la tarjeta ${tarjeta}?`;
                 Swal.fire({
@@ -360,14 +366,16 @@
             return;
         } */
 
-        //console.log('Importe: ', importe);
+        //console.log('Importe: ', importe);       
         let obj = {
             importe: importe,
             fecha: Date.now(),
-            fuente: document.getElementById('Fuente').value,
+            categoria: document.getElementById('Categoria').value,
+            tarjeta: document.getElementById('Tarjeta').value,
             descripcion: document.getElementById('Descripcion').value,
             usuario: '' // Reemplaza esto con el valor real del usuario
         };
+
         //let ingresoJson = JSON.stringify(ingreso);
 
         const response = await transaccionesSrv.createItem(obj);        

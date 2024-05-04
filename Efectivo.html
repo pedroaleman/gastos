@@ -13,7 +13,7 @@
    
     <!--Desarrollo -->
     
-    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+<!--     <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
     <script src="/lib/jquery/dist/jquery.min.js"></script>
     <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -22,11 +22,12 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="shortcut icon" href="/favicon.ico">
     <script src="/js/global.js"></script>
- 
+  -->
 
 <!--Prodfuccion -->
 
-<!-- <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="/gastos/lib/bootstrap/dist/css/bootstrap.min.css" />
 <link rel="stylesheet" href="/gastos/css/site.css" asp-append-version="true" />
 <script src="/gastos/lib/jquery/dist/jquery.min.js"></script>
 <script src="/gastos/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -36,7 +37,7 @@
 <link rel="shortcut icon" href="/gastos/favicon.ico">
 <script src="/gastosjs/global.js"></script>
 
- -->
+
 
     <!--PWA -->
     <!--<meta name="theme-color" content="#efde3e">
@@ -62,9 +63,10 @@
 
                 <ul id="menuPrincipal" class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
                     <li><a href="/gastos/" class="nav-link px-2 text-white">Inicio</a></li>
+                    <li><a href="/gastos/Efectivo" class="nav-link px-2 text-white">Efectivo</a></li>
                     <li><a href="/gastos/Ingresos" class="nav-link px-2 text-white">Ingresos</a></li>
                     <li><a href="/gastos/Gastos" class="nav-link px-2 text-white">Gastos</a></li>
-                    <li><a href="/gastos/Tarjeta" class="nav-link px-2 text-white">Tarjeta</a></li>
+                    <li><a href="/gastos/Tarjetas" class="nav-link px-2 text-white">Tarjetas</a></li>
                 </ul>
             </div>
         </div>
@@ -108,15 +110,15 @@
         </main>
     </div>
 
-    <script src="/app.js"></script>
+    <script src="/gastos/app.js"></script>
 
 
 </body>
 </html>
 
 <!-- <script src="/js/basedatos.js"></script> -->
-<script src="/servicios/efectivo.js"></script>
-<script src="/servicios/categorias.js"></script>
+<script src="/gastos/servicios/efectivo.js"></script>
+<script src="/gastos/servicios/categorias.js"></script>
 <script type="text/javascript">
     //const clsBase = new clsBaseDatos();
     const efectivoSrv = new EfectivoService();
