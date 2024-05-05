@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://backend-centavo.azurewebsites.net/api/1.0/';//'http://localhost:3000/api/1.0/'; 
+const API_BASE_URL = 'https://backend-centavo-production.up.railway.app/api/1.0/';//'http://localhost:3000/api/1.0/'; 
 
 function MostrarError(msg) {
     Swal.fire({
